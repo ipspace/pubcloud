@@ -16,7 +16,7 @@ run sudo apt-get $QUIET install ansible
 #
 if $USE_AWS; then
   echo "... installing AWS Python modules"
-  sudo pip $QUIET install --upgrade boto
+  sudo pip $QUIET install --upgrade boto boto3
 fi
 #
 if $USE_AZURE; then
