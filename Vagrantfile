@@ -14,5 +14,6 @@ Vagrant.configure(2) do |config|
   config.vm.define "linux" do |linux|
     linux.vm.host_name = "linux"
     linux.vm.network "private_network", ip: "172.16.1.12"
+    linux.vm.provision "shell", inline: "/vagrant/install/install.sh"
   end
 end
