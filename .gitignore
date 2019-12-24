@@ -1,0 +1,7 @@
+# Ignore temporary files
+.vagrant
+.DS_Store
+
+# Ignore Ansible retry and log files
+*.retry
+ansible.log
