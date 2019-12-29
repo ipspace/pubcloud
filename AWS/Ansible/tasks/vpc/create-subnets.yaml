@@ -1,0 +1,37 @@
+# Create multiple subnets wihtin a VPC
+#
+# Prerequisites: VPC ID in vpc.vpc.id
+---
+- name: Create VPC subnets
+  ec2_vpc_subnet:
+    region: "{{ global.region }}"
+    az: "{{ subnet.value.az }}"
+    cidr: "{{ subnet.value.prefix }}"
+    vpc_id: "{{ vpc_id.vpc.id }}"
+    tags:
+      Name: "{{ subnet.key }}"
+    map_public: "{{subnet.value.public | default('no') }}"   # mapping public for instances later
+    state: "{{ computed.state }}"
+  loop: "{{ vpc.subnets | dict2items }}"
+  loop_control:
+    loop_var: subnet
+  tags: [ subnet ]
+
+- block:
+
+  - name: Gather subnet facts
+    ec2_vpc_subnet_info:
+      region: "{{ global.region }}"
+      filters:
+        vpc-id: "{{ vpc_id.vpc.id }}"
+    register: vpc_subnets_temp
+
+  - set_fact:
+      vpc_subnet_list: "{{ vpc_subnets_temp.subnets }}"
+
+  - copy:
+      content: "{{ vpc_subnets|to_nice_yaml }}"
+      dest: "{{ computed.logging }}/subnets.yaml"
+
+  tags: [ always ]
+  when: vpc_subnet_list is not defined

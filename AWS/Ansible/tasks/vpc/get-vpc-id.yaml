@@ -1,0 +1,12 @@
+---
+- ec2_vpc_net_info:
+    region: us-west-1
+    filters:
+      "tag:Name": "{{ vpc.name }}"
+  register: vpc_list
+- fail:
+    msg: Cannot find the requested VPC
+  when: vpc_list.vpcs|length == 0
+- set_fact:
+    vpc_id:
+      vpc: "{{ vpc_list.vpcs[0] }}"

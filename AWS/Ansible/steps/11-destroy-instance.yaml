@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  tasks:
+  - name: Destroy a set of EC2 instances with the same tag
+    ec2:
+      region: "us-west-1"
+      image: "{{ lookup('env','AWS_AMI_ID') or 'ami-0dd655843c87b6930' }}"  # Ubuntu server
+      instance_type: t2.micro
+      exact_count: 0
+      count_tag:
+        Name: vm
+      instance_tags:
+        Name: vm

@@ -1,0 +1,42 @@
+---
+- hosts: localhost
+  tasks:
+  - name: Get VPC information
+    ec2_vpc_net_info:
+      region: "us-west-1"
+      filters:
+        "tag:Name": test_vpc
+    register: vpc_info
+
+  - fail: msg="Cannot find VPC test_vpc"
+    when: vpc_info.vpcs|length < 1
+
+  - name: Get Public subnet information
+    ec2_vpc_subnet_info:
+      region: "us-west-1"
+      filters:
+        vpc-id: "{{ vpc_info.vpcs[0].vpc_id }}"
+        "tag:Name": public
+    register: subnet_info
+
+  - fail: msg="Cannot find subnet Public in VPC test_vpc"
+    when: subnet_info.subnets|length < 1
+
+  - name: Launch an EC2 instance
+    ec2:
+      region: "us-west-1"
+      image: "{{ lookup('env','AWS_AMI_ID') or 'ami-0dd655843c87b6930' }}"  # Ubuntu server
+      instance_type: t2.micro
+      wait: true
+      key_name: "test_key"
+      vpc_subnet_id: "{{ subnet_info.subnets[0].subnet_id }}"
+      group: test-public
+      exact_count: 1
+      count_tag:
+        Name: vm
+      instance_tags:
+        Name: vm
+    register: vm_info
+
+  - debug:
+      var: vm_info

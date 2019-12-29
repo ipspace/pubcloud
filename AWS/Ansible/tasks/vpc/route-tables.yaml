@@ -1,0 +1,20 @@
+# creating route table for our public subnet(s)
+---
+- block:
+  - name: Public Route Table setup
+    ec2_vpc_route_table:
+      region: "{{ global.region}}"
+      tags:
+        Name: "{{ vpc.name }}-public"
+      vpc_id: "{{ vpc_id.vpc.id }}"
+      subnets: "{{ vpc_subnet_list|json_query('[?map_public_ip_on_launch].id') }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ igw.gateway_id }}"
+    register: rt
+
+  - copy:
+      content: "{{ rt | to_nice_yaml }}"
+      dest: "{{ computed.logging }}/rt.yaml"
+
+  tags: [ always ]

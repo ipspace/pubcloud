@@ -1,0 +1,52 @@
+#localhost vars
+---
+global:
+  region: us-west-1
+
+vpc:
+  name: test_vpc
+  prefix: 172.19.0.0/17
+  igw: test_igw
+  subnets:
+    public:
+      az: "{{ global.region }}a"
+      prefix: 172.19.1.0/24
+      public: yes
+    private:
+      az: "{{ global.region }}a"
+      prefix: 172.19.2.0/24
+
+# Security groups
+security:
+  groups:
+    vpc:
+      description: "allowing internal trafic inside vpc"
+      rules:
+        - proto: all
+          group_name: vpc
+    public-ssh:
+      description: "allow public ssh"
+      rules:
+        - proto: tcp
+          cidr_ip: 0.0.0.0/0
+          ports:
+            - 22
+    public-http:
+      description: "allow public http"
+      rules:
+        - proto: tcp
+          cidr_ip: 0.0.0.0/0
+          ports:
+            - 80
+            - 443
+
+ec2:
+  key:
+    name: test_ec2_key
+    source: "~/.ssh/id_rsa.pub"
+  vm:
+    web:
+      count: 1
+      ami: ami-0dd655843c87b6930
+      subnet: public
+      sg: [ vpc, public-ssh, public-http ]

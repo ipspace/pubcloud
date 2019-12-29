@@ -1,0 +1,26 @@
+#maintaining security groups:
+---
+- name: create security groups
+  ec2_group:
+    region: "{{ global.region }}"
+    name: "{{ item.key }}"
+    description: "{{ item.value.description }}"
+    vpc_id: "{{ vpc_id.vpc.id }}"
+    rules: "{{ item.value.rules }}"
+    state: "{{ computed.state }}"
+  loop: "{{ security.groups|dict2items }}"
+  tags: [ sg ]
+
+- block:
+  - name: getting sg facts
+    ec2_group_info:
+      region: "{{ global.region }}"
+      filters:
+        vpc-id: "{{ vpc_id.vpc.id }}"
+    register: vpc_sg_info
+
+  - copy:
+      content: "{{ vpc_sg_info | to_nice_yaml }}"
+      dest: "{{ computed.logging }}/sg_info.yaml"
+
+  tags: [ always ]

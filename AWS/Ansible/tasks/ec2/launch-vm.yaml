@@ -1,0 +1,30 @@
+# creating/launching ec2 instance
+---
+- block:
+  - name: provision ec2 instance(s)
+    vars:
+      subnet_q: "[?tags.Name=='%s'].id|[0]"
+    ec2:
+      region: "{{ global.region }}"
+      image: "{{ item.value.ami }}"
+      instance_type: t2.micro
+      group: "{{ item.value.sg }}"
+      key_name: "{{ ec2.key.name  }}"
+      vpc_subnet_id: "{{ vpc_subnet_list|json_query(subnet_q|format(item.value.subnet)) }}"
+      exact_count: "{{ item.value.count }}"
+      count_tag:
+        Name: "{{ item.key }}"
+      instance_tags:
+        Name: "{{ item.key }}"
+    loop: "{{ ec2.vm|dict2items }}"
+    register: ec2_info
+
+  - copy:
+      content: "{{ ec2_info|to_nice_yaml }}"
+      dest: "{{ computed.logging }}/vm.yaml"
+
+  tags: [ always ]
+#  - name: instance(s) ID
+#    debug:
+#      msg: "-ID: {{item.instance_id}} -Status: {{item.monitoring.state}} -Public DNS: {{item.public_dns_name}}"
+#    loop: "{{instance_info.instances}}" 

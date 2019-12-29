@@ -1,0 +1,9 @@
+# a small task to create ec2 keypair, for accessing ec2 instances
+---
+- name: create ec2 key pair
+  ec2_key:
+    region: "{{ global.region }}"
+    name: "{{ ec2.key.name }}"
+    key_material: "{{ lookup('file', ec2.key.source) }}"
+    state: "{{ computed.state }}"
+  tags: [ always ]

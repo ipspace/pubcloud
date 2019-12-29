@@ -1,0 +1,17 @@
+#setting up iternet gateway for vpc
+---
+- block:
+  - name: Internet Gateway setup
+    ec2_vpc_igw:
+      region: "{{ global.region }}"
+      state: "{{ computed.state }}"
+      vpc_id: "{{ vpc_id.vpc.id }}"
+      tags:
+        Name: "{{ vpc.igw }}"
+    register: igw
+
+  - copy:
+      content: "{{ igw | to_nice_yaml }}"
+      dest: "{{ computed.logging }}/igw.yaml"
+
+  tags: always

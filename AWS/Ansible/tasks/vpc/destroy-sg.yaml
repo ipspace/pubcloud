@@ -1,0 +1,16 @@
+---
+- name: getting sg facts
+  ec2_group_info:
+    region: "{{ global.region }}"
+    filters:
+      vpc-id: "{{ vpc_id.vpc.id }}"
+  register: vpc_sg_info
+
+- name: create security groups
+  ec2_group:
+    region: "{{ global.region }}"
+    name: "{{ item.group_name }}"
+    vpc_id: "{{ vpc_id.vpc.id }}"
+    state: absent
+  loop: "{{ vpc_sg_info.security_groups }}"
+  when: item.group_name != 'default'

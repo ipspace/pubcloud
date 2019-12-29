@@ -1,0 +1,15 @@
+# creating/launching ec2 instance
+---
+- name: Destroy ec2 instance(s)
+  ec2:
+    region: "{{ global.region }}"
+    image: "{{ item.value.ami }}"
+    instance_type: t2.micro
+    wait: yes
+    exact_count: 0
+    count_tag:
+      Name: "{{ item.key }}"
+    instance_tags:
+      Name: "{{ item.key }}"
+  loop: "{{ ec2.vm|dict2items }}"
+  register: ec2_info

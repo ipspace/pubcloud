@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  tasks:
+  - name: Create a VPC
+    ec2_vpc_net:
+      name: test_vpc
+      cidr_block: "172.19.0.0/17"
+      region: "us-west-1"
+      state: "{{ state | default('present') }}"

@@ -1,0 +1,9 @@
+# creating route table for our public subnet(s)
+---
+- name: Destroy route tables
+  ec2_vpc_route_table:
+    region: "{{ global.region}}"
+    tags:
+      Name: "{{ vpc.name }}-public"
+    vpc_id: "{{ vpc_id.vpc.id }}"
+    state: absent

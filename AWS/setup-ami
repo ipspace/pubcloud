@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+AMI=$(aws ec2 describe-images \
+        --filters 'Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-*-18.04-amd64-server-*' \
+                  'Name=state,Values=available' \
+                  'Name=owner-id,Values=099720109477' \
+        --query 'reverse(sort_by(Images, &CreationDate))[:1].ImageId' \
+        --output text)
+echo "Latest Ubuntu AMI in selected region: $AMI"
+export AWS_AMI_ID=$AMI

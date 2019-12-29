@@ -1,0 +1,15 @@
+# Create a VPC instance from infrastructure variables
+---
+- block:
+  - name: create VPC
+    ec2_vpc_net:
+      name: "{{ vpc.name }}"
+      cidr_block: "{{ vpc.prefix }}"
+      region: "{{ global.region }}"
+      state: "{{ computed.state }}"
+    register: vpc_id
+
+  - copy:
+      content: "{{ vpc_id | to_nice_yaml }}"
+      dest: "{{ computed.logging }}/vpc_info.yaml"
+  tags: [ always ]

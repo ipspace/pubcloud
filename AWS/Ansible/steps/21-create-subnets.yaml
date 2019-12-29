@@ -1,0 +1,31 @@
+---
+- hosts: localhost
+  tasks:
+  - name: Create a VPC
+    ec2_vpc_net:
+      name: test_vpc
+      cidr_block: "172.19.0.0/17"
+      region: "us-west-1"
+    register: vpc_status
+
+  - name: create Public subnet
+    ec2_vpc_subnet:
+      region: "us-west-1"
+      az: "us-west-1a"
+      cidr: "172.19.1.0/24"
+      vpc_id: "{{ vpc_status.vpc.id }}"
+      map_public: yes
+      tags:
+        Name: "public"
+    register: sub_public
+
+  - name: create VPC subnet
+    ec2_vpc_subnet:
+      region: "us-west-1"
+      az: "us-west-1a"
+      cidr: "172.19.2.0/24"
+      vpc_id: "{{ vpc_status.vpc.id }}"
+      map_public: no
+      tags:
+        Name: "private"
+    register: sub_private

@@ -1,0 +1,26 @@
+---
+- hosts: localhost
+  tasks:
+  - name: Get VPC information
+    ec2_vpc_net_info:
+      region: "us-west-1"
+      filters:
+        "tag:Name": test_vpc
+    register: vpc_info
+
+  - fail: msg="Cannot find VPC test_vpc"
+    when: vpc_info.vpcs|length < 1
+
+  - name: create security groups
+    ec2_group:
+      region: "us-west-1"
+      name: "test-public"
+      description: "Public subnet security group"
+      vpc_id: "{{ vpc_info.vpcs[0].vpc_id }}"
+      rules:
+      - proto: all
+        group_name: test-public
+      - proto: tcp
+        cidr_ip: 0.0.0.0/0
+        ports: [ 22,80,443 ]
+      state: "{{ state|default('present') }}"

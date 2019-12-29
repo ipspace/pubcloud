@@ -1,0 +1,23 @@
+#main file for setting up aws vpc
+
+---
+- hosts: localhost
+  vars_files:
+  - "{{ aws_setup|default('aws-setup.yaml') }}"
+  - common-vars.yaml
+
+  tasks:
+  - include_tasks: tasks/vpc/create-vpc.yaml
+    tags: [ vpc,subnet,gw,route,sg,vm ]
+  - include_tasks: tasks/vpc/create-subnets.yaml
+    tags: [ subnet,route,vm ]
+  - include_tasks: tasks/vpc/create-igw.yaml
+    tags: [ gw,route ]
+  - include_tasks: tasks/vpc/route-tables.yaml
+    tags: [ route ]
+  - include_tasks: tasks/vpc/security-groups.yaml
+    tags: [ sg,vm ]
+  - include_tasks: tasks/ec2/create-keypair.yaml
+    tags: [ key,vm ]
+  - include_tasks: tasks/ec2/launch-vm.yaml
+    tags: [ vm ]

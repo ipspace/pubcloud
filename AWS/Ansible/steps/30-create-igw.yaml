@@ -1,0 +1,17 @@
+---
+- hosts: localhost
+  tasks:
+  - name: Create a VPC
+    ec2_vpc_net:
+      name: test_vpc
+      cidr_block: "172.19.0.0/17"
+      region: "us-west-1"
+    register: vpc_status
+
+  - name: Internet Gateway setup
+    ec2_vpc_igw:
+      region: "us-west-1"
+      vpc_id: "{{ vpc_status.vpc.id }}"
+      tags:
+        Name: "test_igw"
+    register: igw

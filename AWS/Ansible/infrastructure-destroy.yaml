@@ -1,0 +1,19 @@
+#main file for setting up aws vpc
+
+---
+- hosts: localhost
+  vars:
+    state: absent
+  vars_files:
+  - "{{ aws_setup|default('aws-setup.yaml') }}"
+  - common-vars.yaml
+
+  tasks:
+  - include_tasks: tasks/vpc/get-vpc-id.yaml
+  - include_tasks: tasks/ec2/destroy-vm.yaml
+  - include_tasks: tasks/ec2/create-keypair.yaml
+  - include_tasks: tasks/vpc/destroy-sg.yaml
+  - include_tasks: tasks/vpc/destroy-rt.yaml
+  - include_tasks: tasks/vpc/create-igw.yaml
+  - include_tasks: tasks/vpc/create-subnets.yaml
+  - include_tasks: tasks/vpc/create-vpc.yaml
