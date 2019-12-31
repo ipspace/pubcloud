@@ -5,7 +5,7 @@
     ec2_vpc_route_table:
       region: "{{ global.region}}"
       tags:
-        Name: "{{ vpc.name }}-public"
+        Name: "{{ vpc.name }}-public-rt"
       vpc_id: "{{ vpc_id.vpc.id }}"
       subnets: "{{ vpc_subnet_list|json_query('[?map_public_ip_on_launch].id') }}"
       routes:

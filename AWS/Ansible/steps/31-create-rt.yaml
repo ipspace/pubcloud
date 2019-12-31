@@ -31,7 +31,7 @@
     ec2_vpc_route_table:
       region: "us-west-1"
       tags:
-        Name: "test_vpc-public"
+        Name: "test_vpc-public-rt"
       vpc_id: "{{ vpc_status.vpc.id }}"
       subnets:
       - "{{ sub_public.subnet.id }}"

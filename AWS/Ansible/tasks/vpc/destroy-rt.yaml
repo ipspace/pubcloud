@@ -4,6 +4,6 @@
   ec2_vpc_route_table:
     region: "{{ global.region}}"
     tags:
-      Name: "{{ vpc.name }}-public"
+      Name: "{{ vpc.name }}-public-rt"
     vpc_id: "{{ vpc_id.vpc.id }}"
     state: absent

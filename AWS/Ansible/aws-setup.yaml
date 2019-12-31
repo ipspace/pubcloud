@@ -6,7 +6,7 @@ global:
 vpc:
   name: test_vpc
   prefix: 172.19.0.0/17
-  igw: test_igw
+  igw: test_vpc-igw"
   subnets:
     public:
       az: "{{ global.region }}a"

@@ -1,0 +1,167 @@
+#!/bin/bash
+#
+# Read configuration variables
+#
+. variables.sh
+#
+# Find or create VPC
+#
+VPC_ID=$(aws ec2 --profile ec2 describe-vpcs \
+  --filter "Name=tag:Name,Values=$VPC_NAME" --query 'Vpcs[0].VpcId' --output text)
+if [ $VPC_ID == "None" ]; then
+  echo "Creating new VPC: $VPC_NAME"
+  VPC_ID=$(aws ec2 --profile ec2 create-vpc \
+    --cidr-block $VPC_CIDR \
+    --query 'Vpc.{VpcId:VpcId}' \
+    --output text)
+  echo "Created VPC $VPC_ID for CIDR block $VPC_CIDR"
+  # Add Name tag to VPC
+  aws ec2 create-tags --profile ec2 \
+    --resources $VPC_ID \
+    --tags "Key=Name,Value=$VPC_NAME"
+  echo ".. $VPC_ID named $VPC_NAME"
+  aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-hostnames
+  aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-support
+else
+  echo "Found VPC $VPC_NAME $VPC_ID"
+fi
+#
+# Find or create subnet
+#
+SUBNET_ID=$(aws ec2 --profile ec2 describe-subnets \
+  --filter "Name=tag:Name,Values=$SUBNET_NAME" --query 'Subnets[0].SubnetId' --output text)
+if [ $SUBNET_ID == "None" ]; then
+  echo "Creating new subnet: $SUBNET_NAME"
+  SUBNET_ID=$(aws ec2 --profile ec2 create-subnet \
+    --vpc-id $VPC_ID \
+    --cidr-block $SUBNET_CIDR \
+    --query 'Subnet.{SubnetId:SubnetId}' \
+    --output text )
+  echo "Created subnet $SUBNET_ID for CIDR block $SUBNET_CIDR"
+  # Add Name tag to subnet
+  aws ec2 create-tags --profile ec2 \
+    --resources $SUBNET_ID \
+    --tags "Key=Name,Value=$SUBNET_NAME"
+  echo ".. $SUBNET_ID named $SUBNET_NAME"
+else
+  echo "Found subnet $SUBNET_NAME $SUBNET_ID"
+fi
+#
+# Find or create Internet gateway
+#
+IGW_ID=$(aws ec2 --profile ec2 describe-internet-gateways \
+  --filter "Name=tag:Name,Values=$VPC_NAME-igw" \
+  --query 'InternetGateways[0].InternetGatewayId' --output text)
+if [ $IGW_ID == "None" ]; then
+  echo "Creating Internet Gateway..."
+  IGW_ID=$(aws ec2 create-internet-gateway --profile ec2 \
+    --query 'InternetGateway.{InternetGatewayId:InternetGatewayId}' \
+    --output text )
+  echo ".. Internet Gateway $IGW_ID created"
+  # Add Name tag to IGW
+  aws ec2 create-tags --profile ec2 \
+    --resources $IGW_ID \
+    --tags "Key=Name,Value=$VPC_NAME-igw"
+  echo ".. $IGW_ID named $VPC_NAME-igw"
+else
+  echo "Found Internet gateway $VPC_NAME-igw $IGW_ID"
+fi
+#
+# Attach Internet gateway to VPC
+#
+ATT_GW=$(aws ec2 --profile ec2 describe-internet-gateways \
+  --internet-gateway-ids $IGW_ID \
+  --query "InternetGateways[0].Attachments[0].VpcId" \
+  --output text)
+if [ $ATT_GW == "None" ]; then
+  aws ec2 attach-internet-gateway --profile ec2 \
+    --vpc-id $VPC_ID \
+    --internet-gateway-id $IGW_ID
+  echo "Internet Gateway ID $IGW_ID attached to VPC $VPC_ID"
+elif [ $ATT_GW == $VPC_ID ]; then
+  echo "Internet gateway already attached to VPC"
+else
+  echo "ERROR: Internet gateway $IGW_ID attached to unknown VPC $VPC_ID"
+  exit
+fi
+#
+# Find or create Route Table
+#
+RT_ID=$(aws ec2 --profile ec2 describe-route-tables \
+  --filter "Name=tag:Name,Values=$VPC_NAME-public-rt" \
+  --query 'RouteTables[0].RouteTableId' --output text)
+if [ $RT_ID == "None" ]; then
+  echo "Creating Route Table $VPC_NAME-public-rt..."
+  RT_ID=$(aws ec2 create-route-table --profile ec2 \
+    --vpc-id $VPC_ID \
+    --query 'RouteTable.{RouteTableId:RouteTableId}' \
+    --output text )
+  echo ".. Route Table $RT_ID created"
+  # Add Name tag to route table
+  aws ec2 create-tags --profile ec2 \
+    --resources $RT_ID \
+    --tags "Key=Name,Value=$VPC_NAME-public-rt"
+  echo ".. $RT_ID named $VPC_NAME-public-rt"
+  #
+  # Add default route
+  RESULT=$(aws ec2 create-route --profile ec2 \
+    --route-table-id $RT_ID \
+    --destination-cidr-block 0.0.0.0/0 \
+    --gateway-id $IGW_ID)
+  echo ".. Route to '0.0.0.0/0' via Internet Gateway ID $IGW_ID added to $RT_ID"
+else
+  echo "Found Route Table $VPC_NAME-public-rt $RT_ID"
+fi
+
+#
+# Associate public subnet with public route table
+#
+# Associate Public Subnet with Route Table
+RESULT=$(aws ec2 associate-route-table --profile ec2 \
+  --subnet-id $SUBNET_ID \
+  --route-table-id $RT_ID)
+echo ".. Subnet $SUBNET_ID associated with route table $RT_ID"
+
+# Enable Auto-assign Public IP on Public Subnet
+aws ec2 modify-subnet-attribute --profile ec2 \
+  --subnet-id $SUBNET_ID \
+  --map-public-ip-on-launch
+echo ".. auto-assign public IP enabled on subnet $SUBNET_ID"
+
+#
+# Create a security group
+#
+SG_ID=$(aws ec2 --profile ec2 describe-security-groups \
+  --filters "Name=group-name,Values=$SG_NAME" \
+  --query SecurityGroups[0].GroupId \
+  --output text)
+if [ $SG_ID == "None" ]; then
+  echo "Creating security group $SG_NAME"
+  SG_ID=$(aws ec2 --profile ec2 create-security-group \
+    --group-name $SG_NAME --description "$SG_DESC" \
+    --vpc-id $VPC_ID \
+    --output text )
+  echo ".. security group $SG_ID created"
+else
+  echo "Found Security Group $SG_NAME $SG_ID"
+fi
+#
+# Allow inbound traffic
+#
+SG_PORTS=$(aws ec2 --profile ec2 describe-security-groups \
+  --group-id $SG_ID --query SecurityGroups[*].IpPermissions[*].FromPort --output text)
+echo ".. $SG_ID currently enabled for ports $SG_PORTS"
+TAB=$'\t'
+SG_PORTS="$TAB$SG_PORTS$TAB"
+for PORT in $INET_PORTS; do
+  if [[ $SG_PORTS =~ "$TAB$PORT$TAB" ]]; then
+    echo ".. $SG_ID already enabled for port $PORT"
+  else
+    aws ec2 --profile ec2 authorize-security-group-ingress \
+      --group-id $SG_ID --protocol tcp --port $PORT --cidr 0.0.0.0/0
+    echo ".. enabled $SG_ID for inbound port $PORT"
+  fi
+done
+aws ec2 --profile ec2 authorize-security-group-ingress \
+  --group-id $SG_ID --protocol all --source-group $SG_ID
+echo ".. enabled $SG_ID for unrestricted internal access"
