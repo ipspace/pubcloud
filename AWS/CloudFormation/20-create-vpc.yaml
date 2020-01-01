@@ -1,0 +1,23 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+# CloudFormation template for deploying a basic VPC
+
+Resources:
+  VPC:                        # this value will be the VPC ID
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 172.19.0.0/17
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+      - Key: Name
+        # the value of key name will be a mix of strings joined together
+        Value: !Sub '${AWS::StackName}_vpc'
+
+# Exporting the results
+Outputs:
+  VPC:
+    Description: VPC ID
+    Value: !Ref VPC
+    Export:
+      Name: !Sub '${AWS::StackName}-vpc'

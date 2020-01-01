@@ -1,0 +1,51 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+# CloudFormation template for deploying a basic VPC and provision ec2 instance.
+
+Parameters:
+
+  SSHKey:
+    Description: Name of the existing EC2 keypair to enable ssh connection
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: keypair
+    ConstraintDescription: KeyPair must already exist!
+
+  AMI:
+    Description: Ubuntu AMI ID
+    Default: ami-0dd655843c87b6930
+    AllowedPattern: "(ami-[0-9a-f]{17}){0,1}"
+    Type: String
+
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+
+  NetStack:
+    Description: Name of the networking stack
+    Type: String
+
+Resources:
+  WebVM:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref SSHKey
+      ImageId: !Ref AMI
+      NetworkInterfaces:
+        - GroupSet:
+            - Fn::ImportValue: !Sub "${NetStack}-SgId"
+          AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          DeleteOnTermination: true
+          SubnetId:
+            Fn::ImportValue: !Sub "${NetStack}-SubnetId"
+
+# outputs for exporting some values
+Outputs:
+  URL:
+    Description: URL of instance for connection
+    Value: !GetAtt
+      WebVM.PublicDnsName

@@ -1,0 +1,160 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+# CloudFormation template for deploying a basic VPC and provision ec2 instance.
+
+Parameters:
+
+  SSHKey:
+    Description: Name of the existing EC2 keypair to enable ssh connection
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: keypair
+    ConstraintDescription: KeyPair must already exist!
+
+  AMI:
+    Description: Ubuntu AMI ID
+    Default: ami-0dd655843c87b6930
+    AllowedPattern: "(ami-[0-9a-f]{17}){0,1}"
+    Type: String
+
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+
+
+Resources:
+  #adding a VPC resource
+  VPC:                                #this value is logicalID of VPC
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 172.19.0.0/17
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          # the value of key name will be a mix of strings joined together
+          Value: !Sub '${AWS::StackName}_vpc'
+
+  # Internet Gateway for internet access:
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  #attaching gateway to our vpc
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # creating subnets inside VPC
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 172.19.1.0/24
+      AvailabilityZone: !Select      #select the first value from the list
+        - 0
+        - !GetAZs                    #list of all AZ in the current region
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Public
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 172.19.2.0/24
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Private
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Public-RT
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachment     # Don't add the route before IGW is ready
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      GatewayId: !Ref InternetGateway
+      DestinationCidrBlock: 0.0.0.0/0
+
+  # associate public subnet with route table
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - PublicRouteTable
+      - GatewayAttachment
+      - PublicSubnet
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet
+
+  #security groups
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: allowing ssh traffic in, http(s) out
+      GroupName: Public-SG
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: "22"
+          ToPort: "22"
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: "80"
+          ToPort: "80"
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: "443"
+          ToPort: "443"
+          CidrIp: 0.0.0.0/0
+
+  WebVM:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref SSHKey
+      ImageId: !Ref AMI
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref SecurityGroup
+          AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          DeleteOnTermination: true
+          SubnetId: !Ref PublicSubnet
+
+# outputs for exporting some values
+Outputs:
+  VPC:
+    Description: VPC ID
+    Value: !Ref VPC
+    Export:
+      Name: !Sub ${AWS::StackName}-VpcId
+  PublicSubnet:
+    Description: Subnet ID for public instances
+    Value: !Ref PublicSubnet
+    Export:
+      Name: !Sub
+        ${AWS::StackName}-SubnetId
+  SecurityGroup:
+    Description: Security group ID for public instances
+    Value: !GetAtt SecurityGroup.GroupId
+    Export:
+      Name: !Sub ${AWS::StackName}-SgId
+  URL:
+    Description: URL of instance for connection
+    Value: !GetAtt
+      WebVM.PublicDnsName
