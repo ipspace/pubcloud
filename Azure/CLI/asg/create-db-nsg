@@ -1,0 +1,32 @@
+#!/bin/bash
+RG=`cat ~/.rg 2>/dev/null`
+RG=${RG:-Test}
+echo "Create DB NSG in resource group $RG"
+set -x
+#
+# Create network security group
+#
+az network nsg create \
+  --resource-group $RG \
+  --name DB-NSG
+#
+az network nsg rule create \
+  --resource-group $RG --nsg-name DB-NSG \
+  --name Allow-DB-In --priority 100 \
+  --access Allow --protocol Tcp --direction Inbound \
+  --source-asgs Web-ASG --source-port-range "*" \
+  --destination-asgs DB-ASG --destination-port-range 3306
+#
+az network nsg rule create \
+  --resource-group $RG --nsg-name DB-NSG \
+  --name Allow-SSH-In --priority 110 \
+  --access Allow --protocol Tcp --direction Inbound \
+  --source-asgs Web-ASG --source-port-range "*" \
+  --destination-asgs DB-ASG --destination-port-range 22
+#
+az network nsg rule create \
+  --resource-group $RG --nsg-name DB-NSG \
+  --name Deny-Vnet --priority 4000 \
+  --access Deny --protocol Tcp --direction Inbound \
+  --source-address-prefix VirtualNetwork --source-port-range "*" \
+  --destination-address-prefix VirtualNetwork --destination-port-range "*"

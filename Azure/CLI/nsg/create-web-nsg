@@ -1,0 +1,32 @@
+#!/bin/bash
+RG=`cat ~/.rg 2>/dev/null`
+RG=${RG:-Test}
+echo "Create Web NSX in resource group $RG"
+set -x
+#
+# Create network security group
+az network nsg create \
+  --resource-group $RG \
+  --name Web-NSG
+#
+az network nsg rule create \
+  --resource-group $RG --nsg-name Web-NSG \
+  --name Allow-Web-In --priority 100 \
+  --access Allow --protocol Tcp --direction Inbound \
+  --source-address-prefix Internet --source-port-range "*" \
+  --destination-address-prefix "172.16.1.0/24" --destination-port-range 80 443
+#
+az network nsg rule create \
+  --resource-group $RG --nsg-name Web-NSG \
+  --name Allow-SSH-In --priority 110 \
+  --access Allow --protocol Tcp --direction Inbound \
+  --source-address-prefix Internet --source-port-range "*" \
+  --destination-address-prefix "172.16.1.0/24" --destination-port-range 22
+#
+az network nsg rule create \
+  --resource-group $RG --nsg-name Web-NSG \
+  --name Allow-DB-Out --priority 120 \
+  --access Allow --protocol Tcp --direction Outbound \
+  --source-address-prefix "172.16.1.0/24" --source-port-range "*" \
+  --destination-address-prefix "172.16.2.0/24" --destination-port-range 3306
+

@@ -1,0 +1,13 @@
+#!/bin/bash
+RG=`cat ~/.rg 2>/dev/null`
+RG=${RG:-Test}
+NIC=${1:-DBVMNic}
+echo "Show effective routes on NIC $NIC in resource group $RG"
+#
+set -x
+#
+# Show effective routes
+#
+az network nic show-effective-route-table \
+  --resource-group $RG \
+  --name $NIC --output table

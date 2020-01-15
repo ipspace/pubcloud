@@ -1,0 +1,22 @@
+#!/bin/bash
+set -x
+#
+# Deprovision NSG
+#
+az network vnet subnet update \
+  --resource-group Test --vnet-name AppNet --name DBSubnet \
+  --network-security-group ""
+#
+az network vnet subnet update \
+  --resource-group Test --vnet-name AppNet --name AppSubnet \
+  --network-security-group ""
+#
+# Delete network security group
+#
+az network nsg delete \
+  --resource-group Test \
+  --name Web-NSG
+#
+az network nsg delete \
+  --resource-group Test \
+  --name DB-NSG

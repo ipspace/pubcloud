@@ -1,0 +1,11 @@
+#!/bin/bash
+RG=`cat ~/.rg 2>/dev/null`
+RG=${RG:-Test}
+echo "Delete resource group $RG"
+set -e
+set -x
+#
+az group delete --no-wait --name $RG
+#
+set +x
+rm ~/.rg 2>/dev/null

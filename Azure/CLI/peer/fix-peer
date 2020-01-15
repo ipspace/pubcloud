@@ -1,0 +1,20 @@
+#!/bin/bash
+RG=`cat ~/.rg 2>/dev/null`
+RG=${RG:-Test}
+echo "Fix peering between networks A and B in resource group $RG"
+#
+set -x
+#
+# Create A-to-B peering
+#
+az network vnet peering update \
+  --name A2B --resource-group $RG \
+  --vnet-name Net-A \
+  --set allowVirtualNetworkAccess=true
+#
+# Create B-to-A
+#
+az network vnet peering update \
+  --name B2A --resource-group $RG \
+  --vnet-name Net-B \
+  --set allowVirtualNetworkAccess=true

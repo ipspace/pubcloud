@@ -1,0 +1,29 @@
+#!/bin/bash
+RG=`cat ~/.rg 2>/dev/null`
+RG=${RG:-Test}
+echo "Create two virtual machines (one per subnet) in resource group $RG"
+if [ $1 ]; then
+  echo "Public IP address name of second VM: $1"
+fi
+#
+set -x
+#
+az vm create \
+ --resource-group $RG \
+ --name Web \
+ --image UbuntuLTS \
+ --vnet-name AppNet \
+ --subnet AppSubnet \
+ --admin-username azure \
+ --ssh-key-value ~/.ssh/id_rsa.pub \
+ --public-ip-address Public_Web
+#
+az vm create \
+ --resource-group $RG \
+ --name DB \
+ --image UbuntuLTS \
+ --vnet-name AppNet \
+ --subnet DBSubnet \
+ --admin-username azure \
+ --ssh-key-value ~/.ssh/id_rsa.pub \
+ --public-ip-address "$1"

@@ -1,0 +1,7 @@
+#!/bin/bash
+RG=`cat ~/.rg 2>/dev/null`
+RG=${RG:-Test}
+echo "Get public IP for $1 in resource group $RG"
+IP=`az vm show -d -g $RG -n $1 --query publicIps|tr -d '"'`
+echo "Set public IP for $1 to" $IP
+export $1=$IP

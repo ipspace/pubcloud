@@ -1,0 +1,16 @@
+#!/bin/bash
+RG=`cat ~/.rg 2>/dev/null`
+RG=${RG:-Test}
+echo "Create Application Security Group in resource group $RG"
+set -x
+#
+# Create application security groups
+#
+az network asg create \
+  --resource-group $RG \
+  --name Web-ASG
+#
+az network asg create \
+  --resource-group $RG \
+  --name DB-ASG
+#
