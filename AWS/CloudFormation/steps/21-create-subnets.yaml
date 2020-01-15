@@ -1,0 +1,53 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+  VPC:                                #this value is logicalID of VPC
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 172.19.0.0/17
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          # the value of key name will be a mix of strings joined together
+          Value: !Sub '${AWS::StackName}_vpc'
+
+  # creating subnets inside VPC
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 172.19.1.0/24
+      AvailabilityZone: !Select      #select the first value from the list
+        - 0
+        - !GetAZs                    #list of all AZ in the current region
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Public
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 172.19.2.0/24
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Private
+
+Outputs:
+  VPC:
+    Description: VPC ID
+    Value: !Ref VPC
+    Export:
+      Name: !Sub ${AWS::StackName}-VpcId
+  PublicSubnet:
+    Description: Subnet ID for public instances
+    Value: !Ref PublicSubnet
+    Export:
+      Name: !Sub
+        ${AWS::StackName}-SubnetId

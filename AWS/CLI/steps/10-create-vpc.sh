@@ -6,6 +6,7 @@
 #
 . variables.sh
 set -e
+set -x
 #
 # Create VPC
 #

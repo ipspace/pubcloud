@@ -1,0 +1,41 @@
+---
+- hosts: localhost
+  tasks:
+  - name: Get VPC information
+    ec2_vpc_net_info:
+      region: "us-west-1"
+      filters:
+        "tag:Name": test_vpc
+    register: vpc_info
+
+  - fail: msg="Cannot find VPC test_vpc"
+    when: vpc_info.vpcs|length < 1
+
+  - name: Delete Public subnet
+    ec2_vpc_subnet:
+      region: "us-west-1"
+      az: "us-west-1a"
+      cidr: "172.19.1.0/24"
+      vpc_id: "{{ vpc_info.vpcs[0].vpc_id }}"
+      map_public: yes
+      tags:
+        Name: "public"
+      state: absent
+
+  - name: Delete Private subnet
+    ec2_vpc_subnet:
+      region: "us-west-1"
+      az: "us-west-1a"
+      cidr: "172.19.2.0/24"
+      vpc_id: "{{ vpc_info.vpcs[0].vpc_id }}"
+      map_public: no
+      tags:
+        Name: "private"
+      state: absent
+
+  - name: Delete VPC
+    ec2_vpc_net:
+      name: test_vpc
+      cidr_block: "172.19.0.0/17"
+      region: "us-west-1"
+      state: absent
