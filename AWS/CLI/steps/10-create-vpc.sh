@@ -24,8 +24,8 @@ if [ "$VPC_ID" == "None" ]; then
     --resources $VPC_ID \
     --tags "Key=Name,Value=$VPC_NAME"
   echo ".. $VPC_ID named $VPC_NAME"
-  aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-hostnames
   aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-support
+  aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-hostnames
 else
   echo "VPC $VPC_NAME already exists"
 fi
