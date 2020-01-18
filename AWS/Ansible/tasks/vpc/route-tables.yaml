@@ -7,7 +7,9 @@
       tags:
         Name: "{{ vpc.name }}-public-rt"
       vpc_id: "{{ vpc_id.vpc.id }}"
-      subnets: "{{ vpc_subnet_list|json_query('[?map_public_ip_on_launch].id') }}"
+      subnets: |
+        {{ vpc_subnet_list|
+           json_query('[?map_public_ip_on_launch].id') }}
       routes:
       - dest: 0.0.0.0/0
         gateway_id: "{{ igw.gateway_id }}"

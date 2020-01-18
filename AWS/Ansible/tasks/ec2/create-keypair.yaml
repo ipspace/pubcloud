@@ -1,4 +1,4 @@
-# a small task to create ec2 keypair, for accessing ec2 instances
+# a small task to create ec2 keypair
 ---
 - name: create ec2 key pair
   ec2_key:

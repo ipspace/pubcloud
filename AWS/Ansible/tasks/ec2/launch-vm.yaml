@@ -10,7 +10,9 @@
       instance_type: t2.micro
       group: "{{ item.value.sg }}"
       key_name: "{{ ec2.key.name  }}"
-      vpc_subnet_id: "{{ vpc_subnet_list|json_query(subnet_q|format(item.value.subnet)) }}"
+      vpc_subnet_id: |
+        {{ vpc_subnet_list|
+           json_query(subnet_q|format(item.value.subnet)) }}
       exact_count: "{{ item.value.count }}"
       count_tag:
         Name: "{{ item.key }}"

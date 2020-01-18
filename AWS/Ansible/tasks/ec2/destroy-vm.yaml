@@ -1,4 +1,4 @@
-# creating/launching ec2 instance
+# Shut down EC2 instances
 ---
 - name: Destroy ec2 instance(s)
   ec2:

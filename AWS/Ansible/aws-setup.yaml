@@ -50,3 +50,8 @@ ec2:
       ami: ami-0dd655843c87b6930
       subnet: public
       sg: [ vpc, public-ssh, public-http ]
+    db:
+      count: 1
+      ami: ami-0dd655843c87b6930
+      subnet: private
+      sg: [ vpc ]
