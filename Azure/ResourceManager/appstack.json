@@ -1,0 +1,216 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {"description": "location of resources"}
+        },
+        "ssh-public-key": {
+            "type": "string",
+            "metadata": { "description": "SSH public key" }
+        }
+    },
+
+    "variables": {
+        "VnetId" : "[resourceId('Microsoft.Network/virtualNetworks','Network')]",
+        "pubSubnetId": "[concat(variables('VnetId'),'/subnets/public-subnet')]"
+    },
+
+    "outputs": {
+        "web-server": {
+            "type": "object",
+            "value": "[reference('web-server')]"
+        },
+        "public-ip": {
+            "type": "object",
+            "value": "[reference('web-public')]"
+        }
+    },
+
+    "resources": [
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "web-public",
+            "apiVersion": "2019-09-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "Network",
+            "apiVersion": "2019-09-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [ "Private_RT" ],
+            "properties": {
+                "addressSpace":{
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "type": "subnets",
+                        "name": "public-subnet",
+                        "properties": {
+                            "addressPrefix": "10.0.1.0/24"
+                        }
+                    },
+                    {
+                        "type": "subnets",
+                        "name": "private-subnet",
+                        "properties": {
+                            "addressPrefix": "10.0.2.0/24",
+                            "routeTable": {
+                                "id": "[resourceId('Microsoft.Network/routeTables','Private_RT')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/routeTables",
+            "name": "Private_RT",
+            "apiVersion": "2019-09-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "routes": [
+                    {
+                        "name": "drop-default",
+                        "properties":{
+                            "addressPrefix": "0.0.0.0/0",
+                            "nextHopType": "none"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "public-SG",
+            "apiVersion": "2019-09-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Inbound_SSH",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix" : "*",
+                            "destinationAddressPrefix": "*",
+                            "access" : "Allow",
+                            "priority": "100",
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "Inbound_HTTP",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "access" : "Allow",
+                            "priority": "101",
+                            "direction": "Inbound",
+                            "sourceAddressPrefix" : "*",
+                            "destinationAddressPrefix": "*"
+                        }
+                    },
+                    {
+                        "name": "Inbound_HTTPS",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "access" : "Allow",
+                            "priority": "102",
+                            "direction": "Inbound",
+                            "sourceAddressPrefix" : "*",
+                            "destinationAddressPrefix": "*"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion":"2019-09-01",
+            "name": "web-NIC",
+            "location": "[parameters('location')]",
+            "dependsOn": [ "public-SG","web-public","Network" ],
+            "properties": {
+                "networkSecurityGroup":{
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups','public-SG')]"
+                },
+                "ipConfigurations": [
+                    {
+                        "name": "web-NIC-config",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('pubSubnetId')]"
+                                },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses','web-public')]"
+                            }
+                        }
+                    }
+                ]
+            }
+
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-12-01",
+            "location": "[parameters('location')]",
+            "name": "web-server",
+            "dependsOn": [
+                "web-NIC"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_B1s"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "createOption":"fromImage"
+                    },
+                    "imageReference": {
+                        "publisher":"Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "18.04-LTS",
+                        "version":"latest"
+                    }
+                },
+                "osProfile": {
+                    "computerName": "web-server",
+                    "adminUsername": "azure",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path":"/home/azure/.ssh/authorized_keys",
+                                    "keyData":"[parameters('ssh-public-key')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'web-NIC')]"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
