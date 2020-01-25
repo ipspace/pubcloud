@@ -36,6 +36,7 @@ resource "azurerm_subnet" "tf_private_subnet" {
 	resource_group_name = azurerm_resource_group.tf_rg.name
 	virtual_network_name = azurerm_virtual_network.tf_vnet.name
 	address_prefix = var.private_sub_address
+	route_table_id = azurerm_route_table.tf_RT.id
 }
 
 ###################
@@ -101,7 +102,7 @@ resource "azurerm_network_security_group" "tf_sg" {
 		direction = "Inbound"
 		access = "Allow"
 		protocol = "Tcp"
-		source_port_range = "80"
+		source_port_range = "*"
 		destination_port_range = "80"
 		source_address_prefix = "*"
 		destination_address_prefix = "*"
@@ -113,7 +114,7 @@ resource "azurerm_network_security_group" "tf_sg" {
 		direction = "Inbound"
 		access = "Allow"
 		protocol = "Tcp"
-		source_port_range = "443"
+		source_port_range = "*"
 		destination_port_range = "443"
 		source_address_prefix = "*"
 		destination_address_prefix = "*"
