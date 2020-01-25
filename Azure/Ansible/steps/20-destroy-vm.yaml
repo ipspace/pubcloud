@@ -1,0 +1,10 @@
+#!/usr/bin/ansible-playbook
+#
+---
+- name: Destroy a virtual machine
+  hosts: localhost
+  tasks:
+  - azure_rm_virtualmachine:
+      name: Server
+      resource_group: Test
+      state: absent

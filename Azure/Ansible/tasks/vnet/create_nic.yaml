@@ -1,0 +1,17 @@
+# creating network interface card for intercconection between VM and Vnet
+---
+- name: Create Network Interface Cards
+  azure_rm_networkinterface:
+    resource_group: "{{ global.resourcegroup }}"
+    name: "{{ nic.key }}"
+    virtual_network: "{{ vnet.name }}"
+    subnet_name: "{{ nic.value.subnet }}"
+    security_group: "{{ nic.value.sg }}"
+    state: "{{ global.state }}"
+    ip_configurations:
+    - name: Primary
+      primary: yes
+      public_ip_address_name: "{{ nic.value.public|default('') }}"
+  loop: "{{ NIC | dict2items }}"
+  loop_control:
+    loop_var: nic

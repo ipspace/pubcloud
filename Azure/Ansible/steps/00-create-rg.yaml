@@ -1,0 +1,9 @@
+#!/usr/bin/ansible-playbook
+#
+---
+- name: Create Azure resource group
+  hosts: localhost
+  tasks:
+  - azure_rm_resourcegroup:
+      name: Test
+      location: westeurope

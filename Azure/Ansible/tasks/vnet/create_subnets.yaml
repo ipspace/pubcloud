@@ -1,0 +1,24 @@
+---
+- name: Create Azure VNet subnets
+  azure_rm_subnet:
+    resource_group: "{{ global.resourcegroup }}"
+    virtual_network_name: "{{ vnet.name }}"
+    name: "{{ subnet.key }}"
+    address_prefix_cidr: "{{ subnet.value.cidr }}"
+    security_group: "{{ subnet.value.sg | default('') }}"
+    state: "{{ global.state }}"
+  loop: "{{ vnet.subnets | dict2items }}"
+  loop_control:
+    loop_var: subnet
+
+- name: Apply route table to Azure subnets
+  azure_rm_subnet:
+    resource_group: "{{ global.resourcegroup }}"
+    virtual_network_name: "{{ vnet.name }}"
+    name: "{{ subnet.key }}"
+    route_table: "{{ subnet.value.rt }}"
+    state: "{{ global.state }}"
+  when: subnet.value.rt is defined
+  loop: "{{ vnet.subnets | dict2items }}"
+  loop_control:
+    loop_var: subnet

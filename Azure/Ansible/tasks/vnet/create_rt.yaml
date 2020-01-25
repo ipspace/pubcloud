@@ -1,0 +1,14 @@
+#create route table and route
+---
+- name: Create Azure route table(s)
+  azure_rm_routetable:
+    name: "{{ rt.key }}"
+    resource_group: "{{ global.resourcegroup }}"
+    state: "{{ global.state }}"
+  loop: "{{ route_table | dict2items }}"
+  loop_control:
+    loop_var: rt
+
+- name : Add routes to Azure route table(s)
+  include_tasks: create_rt_entry.yaml
+  loop: "{{ route_table | dict2items }}"

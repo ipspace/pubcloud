@@ -1,0 +1,11 @@
+#!/usr/bin/ansible-playbook
+#
+---
+- name: Destroy Azure resource group and all its resources
+  hosts: localhost
+  tasks:
+  - azure_rm_resourcegroup:
+      name: Test
+      location: westeurope
+      state: absent
+      force: yes

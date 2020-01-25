@@ -1,0 +1,12 @@
+# securitygroup for VM
+---
+- name: Create Network Security Groups
+  azure_rm_securitygroup:
+    resource_group: "{{ global.resourcegroup }}"
+    name: "{{ sg.key }}"
+    rules: "{{ sg.value.rules }}"
+    state: "{{ global.state }}"
+    purge_rules: yes
+  loop: "{{ security.groups | dict2items }}"
+  loop_control:
+    loop_var: sg

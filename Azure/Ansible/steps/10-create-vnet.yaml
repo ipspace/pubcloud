@@ -1,0 +1,20 @@
+#!/usr/bin/ansible-playbook
+#
+---
+- name: Create Azure VNet and subnet
+  hosts: localhost
+  tasks:
+  - azure_rm_resourcegroup:
+      name: Test
+      location: westeurope
+
+  - azure_rm_virtualnetwork:
+      resource_group: Test
+      name: VNet
+      address_prefixes_cidr: "10.1.0.0/16"
+
+  - azure_rm_subnet:
+      resource_group: Test
+      virtual_network_name: Vnet
+      name: Public
+      address_prefix_cidr: "10.1.1.0/24"

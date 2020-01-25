@@ -1,0 +1,74 @@
+# localhost vars
+---
+global:
+  region: westeurope
+  resourcegroup: ansible_demo
+  state: "{{ state | default('present') }}"
+  admin_user: azure
+  vm_size: Standard_B1s
+  vm_image: ubuntu
+
+vnet:
+  name: VNET
+  cidr: 172.19.0.0/17
+  subnets:
+    public:
+      cidr: 172.19.1.0/24
+    private:
+      cidr: 172.19.2.0/24
+      rt: Private_RT
+      sg: internal-sg
+
+route_table:
+  Private_RT:
+    routes:
+    - name: Drop_Default
+      prefix: 0.0.0.0/0
+      hop_type : none
+
+security:
+  groups:
+    web-sg:
+      description: Allow outside access to public web server
+      rules:
+      - name: AllowSSH
+        protocol: Tcp
+        destination_port_range: 22
+        direction: Inbound
+        priority: 101
+      - name: allowHTTP
+        protocol: Tcp
+        destination_port_range: 80
+        direction: Inbound
+        priority: 102
+      - name: allowHTTPS
+        protocol: Tcp
+        destination_port_range: 443
+        direction: Inbound
+        priority: 103
+    internal-sg:
+      description: Intra-VNET traffic only
+      rules: []
+
+NIC:
+  web-NIC:
+    subnet: public
+    sg: public-ssh
+    public: web-public
+    domain: web-public
+
+images:
+  ubuntu:
+    offer: "UbuntuServer"
+    publisher: "Canonical"
+    sku: "18.04-LTS"
+    version: "latest"
+
+vm:
+  web:
+    subnet: public
+    size: Standard_B1s
+    nic: [ web-NIC ]
+  db:
+    subnet: private
+    password: Db@dm1n

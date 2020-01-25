@@ -1,0 +1,13 @@
+# create public ip for VM to communicate with Internet
+---
+- name: Create Public IP addresses
+  azure_rm_publicipaddress:
+    resource_group: "{{ global.resourcegroup }}"
+    name: "{{ nic.value.public }}"
+    domain_name: "{{ nic.value.domain | default('') }}"
+    allocation_method: Static
+    state: "{{ global.state }}"
+  loop: "{{ NIC | dict2items }}"
+  when: nic.value.public is defined
+  loop_control:
+    loop_var: nic

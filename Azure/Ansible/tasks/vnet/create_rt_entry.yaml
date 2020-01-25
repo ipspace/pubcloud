@@ -1,0 +1,12 @@
+---
+- name: Create Azure RT Enties
+  azure_rm_route:
+    name: "{{ rt.name }}"
+    resource_group: "{{ global.resourcegroup }}"
+    route_table_name: "{{ item.key }}"
+    address_prefix: "{{ rt.prefix }}"
+    next_hop_type:  "{{ rt.hop_type }}"
+    state: "{{ global.state }}"
+  loop: "{{ item.value.routes }}"
+  loop_control:
+    loop_var: rt

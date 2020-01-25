@@ -1,0 +1,25 @@
+#!/usr/bin/ansible-playbook
+#
+# Main Azure infrastructure deployment playbook
+#
+---
+- hosts: localhost
+  vars_files:
+  - az_setup_vars.yaml
+  tasks:
+  - import_tasks: tasks/vnet/create_rg.yaml
+    tags: [ rg ]
+  - import_tasks: tasks/vnet/create_vnet.yaml
+    tags: [ vnet ]
+  - import_tasks: tasks/vnet/create_rt.yaml
+    tags: [ rt ]
+  - import_tasks: tasks/vnet/create_sg.yaml
+    tags: [ sg ]
+  - import_tasks: tasks/vnet/create_subnets.yaml
+    tags: [ subnet ]
+  - import_tasks: tasks/vnet/create_publicip.yaml
+    tags: [ nic ]
+  - import_tasks: tasks/vnet/create_nic.yaml
+    tags: [ nic ]
+  - import_tasks: tasks/vm/launch_vm.yaml
+    tags: [ vm ]

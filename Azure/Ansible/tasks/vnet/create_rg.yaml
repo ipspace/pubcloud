@@ -1,0 +1,6 @@
+---
+- name: Create Azure Resource Group
+  azure_rm_resourcegroup:
+    name: "{{ global.resourcegroup }}"
+    location: "{{ global.region }}"
+    state: "{{ global.state }}"

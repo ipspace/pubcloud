@@ -1,0 +1,21 @@
+---
+- name: Launch Azure Virtual Machines
+  azure_rm_virtualmachine:
+    name: "{{ vmi.key }}"
+    resource_group: "{{ global.resourcegroup }}"
+    subnet_name: "{{ vmi.value.subnet }}"
+    virtual_network_name: "{{ vnet.name }}"
+    network_interface_names: "{{ vmi.value.nic|default([]) }}"
+    vm_size: "{{ vmi.size|default(global.vm_size) }}"
+    os_type: Linux
+    admin_username: "{{ global.admin_user }}"
+    ssh_password_enabled: "{{ vmi.value.password is defined }}"
+    admin_password: "{{ vmi.value.password|default('') }}"
+    ssh_public_keys:
+      - path: "/home/{{ global.admin_user }}/.ssh/authorized_keys"
+        key_data: "{{ lookup('file','~/.ssh/id_rsa.pub') }}"
+    image: "{{ images[vmi.value.image|default(global.vm_image)] }}"
+    state: "{{ global.state }}"
+  loop: "{{ vm | dict2items }}"
+  loop_control:
+    loop_var: vmi
