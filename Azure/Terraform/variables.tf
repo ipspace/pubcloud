@@ -2,5 +2,10 @@
 
 variable "location" {
 	type = string
-	default = "eastus"
+	default = "westeurope"
+}
+
+variable "rg_name" {
+  type = string
+  default = "terraform_demo"
 }

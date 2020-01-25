@@ -5,14 +5,14 @@ variable "vm_name" {
 	default = "WebVM"
 }
 
-variable "location" {
+variable "admin_user" {
 	type = string
-	default = "eastus"
+	default = "azure"
 }
 
 variable "vm_size" {
 	type = string
-	default = "Standard_DS1_v2"
+	default = "Standard_B1s"
 }
 
 variable "image_publisher" {
@@ -35,8 +35,14 @@ variable "image_version" {
 	default = "latest"
 }
 
+variable "location" {
+	description = "Azure location"
+	type = string
+	default = ""
+}
+
 variable "rg_name" {
-	description = "resource group name for VM launc"
+	description = "resource group name for VM launch"
 	type = string
 	default = ""
 }

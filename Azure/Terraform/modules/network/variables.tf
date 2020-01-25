@@ -1,18 +1,19 @@
 # variables for network.tf
 
 variable "location" {
+	description = "Azure location"
 	type = string
-	default = "eastus"
+	default = null
 }
 
-variable "resourcegroup_name" {
+variable "rg_name" {
 	type = string
-	default = "terraform_demo"
+	default = null
 }
 
 variable "network_name" {
 	type = string
-	default = "MyVnet"
+	default = "VNet"
 }
 
 variable "network_ip" {
@@ -42,7 +43,7 @@ variable "private_sub_address" {
 
 variable "rt_name" {
 	type = string
-	default = "PublicRT"
+	default = "Private_RT"
 }
 
 variable "route_name" {
@@ -62,7 +63,7 @@ variable "pub_ip_method" {
 
 variable "sg_name" {
 	type = string
-	default = "mySG"
+	default = "Public_SG"
 }
 
 variable "nic_name" {

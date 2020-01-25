@@ -5,7 +5,7 @@
 ######################
 
 resource "azurerm_resource_group" "tf_rg" {
-	name = var.resourcegroup_name
+	name = var.rg_name
 	location = var.location
 }
 
@@ -84,7 +84,7 @@ resource "azurerm_network_security_group" "tf_sg" {
 	resource_group_name = azurerm_resource_group.tf_rg.name
 
 	security_rule {
-		name = var.ssh_rule_name
+		name = "Inbound_SSH"
 		priority = 101
 		direction = "Inbound"
 		access = "Allow"
@@ -96,7 +96,7 @@ resource "azurerm_network_security_group" "tf_sg" {
 	}
 
 	security_rule {
-		name = var.http_rule_name
+		name = "Inbound_HTTP"
 		priority = 102
 		direction = "Inbound"
 		access = "Allow"
@@ -108,7 +108,7 @@ resource "azurerm_network_security_group" "tf_sg" {
 	}
 
 	security_rule {
-		name = var.https_rule_name
+		name = "Inbound_HTTPS"
 		priority = 103
 		direction = "Inbound"
 		access = "Allow"
