@@ -1,0 +1,54 @@
+#! /usr/bin/ansible-playbook
+#
+---
+- name: Create Azure VNet, subnet, and VM
+  hosts: localhost
+  tasks:
+  - azure_rm_resourcegroup:
+      name: Test
+      location: westeurope
+
+  - azure_rm_virtualnetwork:
+      resource_group: Test
+      name: VNet
+      address_prefixes_cidr: "10.1.0.0/16"
+
+  - azure_rm_subnet:
+      resource_group: Test
+      virtual_network_name: Vnet
+      name: Public
+      address_prefix_cidr: "10.1.1.0/24"
+
+  - name: Create Public IP addresses
+    azure_rm_publicipaddress:
+      resource_group: Test
+      name: public-ip
+      allocation_method: Static
+
+  - name: Create Network Interface Cards
+    azure_rm_networkinterface:
+      resource_group: Test
+      name: VM-NIC
+      virtual_network: Vnet
+      subnet_name: Public
+      ip_configurations:
+      - name: Primary
+        primary: yes
+        public_ip_address_name: public-ip
+
+  - azure_rm_virtualmachine:
+      name: Server
+      resource_group: Test
+      vm_size: Standard_B1s
+      os_type: Linux
+      network_interface_names: [ VM-NIC ]
+      image:
+        offer: "UbuntuServer"
+        publisher: "Canonical"
+        sku: "18.04-LTS"
+        version: "latest"
+      admin_username: azure
+      ssh_password_enabled: false
+      ssh_public_keys:
+        - path: "/home/azure/.ssh/authorized_keys"
+          key_data: "{{ lookup('file','~/.ssh/id_rsa.pub') }}"
