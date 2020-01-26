@@ -1,0 +1,191 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+# CloudFormation template for deploying a basic VPC and provision ec2 instance.
+
+Parameters:
+
+  SSHKey:
+    Description: Name of the existing EC2 keypair to enable ssh connection
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: test_key
+    ConstraintDescription: KeyPair must already exist!
+
+  AMI:
+    Description: Ubuntu AMI ID
+    Default: ami-0dd655843c87b6930
+    AllowedPattern: "(ami-[0-9a-f]{17}){0,1}"
+    Type: String
+
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}_vpc'
+
+  # Internet Gateway for internet access:
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # creating subnets inside VPC
+  SubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Subnet-A
+
+  SubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Subnet-B
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Public-RT
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      GatewayId: !Ref InternetGateway
+      DestinationCidrBlock: 0.0.0.0/0
+
+  SubnetART:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - PublicRouteTable
+      - GatewayAttachment
+      - SubnetA
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref SubnetA
+
+  SubnetBRT:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - PublicRouteTable
+      - GatewayAttachment
+      - SubnetB
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref SubnetB
+
+  PublicSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH, HTTP and HTTPS
+      GroupName: Public-SG
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: "22"
+          ToPort: "22"
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: "80"
+          ToPort: "80"
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: "443"
+          ToPort: "443"
+          CidrIp: 0.0.0.0/0
+
+  PublicSGSelf:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: "-1"
+      SourceSecurityGroupId: !Ref PublicSG
+      GroupId: !Ref PublicSG
+
+  VMA:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref SSHKey
+      ImageId: !Ref AMI
+      NetworkInterfaces:
+      - GroupSet:
+          - !Ref PublicSG
+        AssociatePublicIpAddress: true
+        DeviceIndex: 0
+        DeleteOnTermination: true
+        SubnetId: !Ref SubnetA
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-VM-A
+
+  VMB:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref SSHKey
+      ImageId: !Ref AMI
+      NetworkInterfaces:
+      - GroupSet:
+          - !Ref PublicSG
+        AssociatePublicIpAddress: true
+        DeviceIndex: 0
+        DeleteOnTermination: true
+        SubnetId: !Ref SubnetA
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-VM-B
+
+  VMC:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref SSHKey
+      ImageId: !Ref AMI
+      NetworkInterfaces:
+      - GroupSet:
+          - !Ref PublicSG
+        AssociatePublicIpAddress: true
+        DeviceIndex: 0
+        DeleteOnTermination: true
+        SubnetId: !Ref SubnetB
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-VM-C
+
+# outputs for exporting some values
+Outputs:
+  VMA:
+    Description: URL to access VM A
+    Value: !GetAtt VMA.PublicDnsName
+  VMB:
+    Description: URL to access VM B
+    Value: !GetAtt VMB.PublicDnsName
+  VMC:
+    Description: URL to access VM C
+    Value: !GetAtt VMC.PublicDnsName
