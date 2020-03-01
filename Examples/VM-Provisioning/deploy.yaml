@@ -1,0 +1,24 @@
+#!/usr/bin/ansible-playbook
+#
+# Create a VM in default VPC, enable SSH access in default security group
+# and provision a VM
+#
+---
+- name: Create a VM
+  import_playbook: create-vm.yaml
+  tags: [ create,never ]
+
+- name: Create dynamic host group
+  tags: [ always ]
+  import_playbook: create-ec2-host-group.yaml
+  vars:
+    ec2_group: web_vm
+    ec2_tags: web
+
+- name: Provision VM
+  hosts: web_vm
+  tags: [ provision,never ]
+  vars_files:
+  - parameters.yaml
+  tasks:
+  - import_tasks: web-vm-setup.yaml

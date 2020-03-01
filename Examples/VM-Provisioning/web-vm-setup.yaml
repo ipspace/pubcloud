@@ -1,0 +1,26 @@
+#
+# Setup a web server on a Ubuntu instance
+#
+---
+- become: yes
+  block:
+  - name: Update and upgrade apt packages
+    apt:
+      upgrade: yes
+      update_cache: yes
+
+  - name: Install apache on ubuntu
+    apt:
+      name: apache2
+      state: latest
+      update_cache: yes
+
+  - template:
+      src: index.html
+      dest: /var/www/html/index.html
+
+  - name: Restart apache2 web server
+    service:
+      name: apache2
+      enabled: yes
+      state: restarted

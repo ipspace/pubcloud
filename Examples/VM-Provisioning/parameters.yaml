@@ -1,0 +1,9 @@
+#
+# Parameters for VM provisioning example
+#
+---
+ec2_keypair: test_key
+ec2_ami: ami-0b418580298265d5c
+ec2_vm_tag: web
+ec2_inst_count: 2
+ec2_open_ports: 80

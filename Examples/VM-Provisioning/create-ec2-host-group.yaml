@@ -1,0 +1,18 @@
+#
+# Create dynamic Ansible EC2 host group based on instance tags
+#
+---
+- hosts: localhost
+  name: Create host group
+  tasks:
+  - ec2_instance_info:
+      filters:
+        "tag:Name": "{{ ec2_tags }}"
+    register: ec2_info
+
+  - add_host:
+      name: "{{ item.public_dns_name }}"
+      groups: "{{ ec2_group }}"
+      ansible_ssh_user: ubuntu
+    loop: "{{ ec2_info.instances }}"
+    when: item.state.name == "running"

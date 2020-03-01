@@ -1,0 +1,20 @@
+#!/usr/bin/ansible-playbook
+#
+# Destroy a virtual machine in AWS EC2 default VPC
+#
+# Input parameters:
+# - ec2_vm_tag: instance tag
+#
+---
+- hosts: localhost
+  vars_files:
+  - parameters.yaml
+  tasks:
+  - name: Destroy EC2 instance(s)
+    ec2:
+      image: "{{ ec2_ami }}"
+      exact_count: 0
+      count_tag:
+        Name: "{{ ec2_vm_tag }}"
+      instance_tags:
+        Name: "{{ ec2_vm_tag }}"
