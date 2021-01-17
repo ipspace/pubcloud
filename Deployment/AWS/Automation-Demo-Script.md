@@ -13,6 +13,8 @@ Prepare for the demos
 
 ## Create a single object (VPC)
 
+In the first set of examples we're creating a single object (VPC) to illustrate the _check-before-creating_ concept.
+
 ### CLI
 
 Execute in CLI directory
@@ -51,8 +53,15 @@ aws cloudformation wait stack-create-complete
 aws_vpc
 aws ec2 describe-vpcs
 aws cloudformation delete-stack --stack-name test
+```
 
 ## Create Object Hierarchy
+
+In the second set of examples we're creating an object hierarchy to illustrate the following workflow:
+
+* Check whether an object exists
+* Get the ID of the parent object
+* Create an object using parent object ID
 
 ### CLI
 

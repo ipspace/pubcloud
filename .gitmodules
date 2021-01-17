@@ -1,0 +1,3 @@
+[submodule "Deployment/Azure/CLI"]
+	path = Deployment/Azure/CLI
+	url = https://github.com/ipspace/azure
