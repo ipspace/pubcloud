@@ -1,0 +1,13 @@
+---
+
+- hosts: webserver
+  gather_facts: false
+
+  tasks:
+    - name: test the connection over private IP
+      wait_for:
+        host: "{{ hostvars[item].private_ip_address }}"
+        port: 80
+        delay: 5
+        state: started
+      with_items: "{{ groups['webserver'] }}"

@@ -1,0 +1,11 @@
+### ansible dynamic inventory to get all ec2 instances
+plugin: aws_ec2
+regions: 
+  - eu-west-2
+  - eu-west-3
+strict: False
+
+keyed_groups: 
+  #creating groups based on the tag of the instance
+  - key: tags.Type
+    separator: ""
