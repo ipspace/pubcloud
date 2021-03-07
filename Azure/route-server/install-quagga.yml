@@ -1,0 +1,26 @@
+---
+- name: "Install and configure Quagga on NVA VMs"
+  hosts: tag_role_NVA
+  become: true
+  vars:
+    ansible_user: azure
+  tasks:
+  - apt:
+      name: quagga
+      state: present
+  - name: Copy Zebra config to NVA VM
+    copy:
+      src: zebra.conf
+      dest: /etc/quagga/
+  - name: Copy BGPD config to NVA VM
+    copy:
+      src: bgpd.conf
+      dest: /etc/quagga/
+  - name: Start Zebra
+    service:
+      name: zebra
+      state: started
+  - name: Start BGPD
+    service:
+      name: bgpd
+      state: started
