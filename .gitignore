@@ -5,3 +5,7 @@
 # Ignore Ansible retry and log files
 *.retry
 ansible.log
+
+# Ignore Terraform work files
+.terraform*
+*tfstate*
