@@ -28,15 +28,14 @@ resource "azurerm_subnet" "tf_public_subnet" {
 	name = var.public_sub_name
 	resource_group_name = azurerm_resource_group.tf_rg.name
 	virtual_network_name = azurerm_virtual_network.tf_vnet.name
-	address_prefix = var.public_sub_address
+	address_prefixes = [ var.public_sub_address ]
 }
 
 resource "azurerm_subnet" "tf_private_subnet" {
 	name = var.private_sub_name
 	resource_group_name = azurerm_resource_group.tf_rg.name
 	virtual_network_name = azurerm_virtual_network.tf_vnet.name
-	address_prefix = var.private_sub_address
-	route_table_id = azurerm_route_table.tf_RT.id
+	address_prefixes = [ var.private_sub_address ]
 }
 
 ###################
@@ -129,7 +128,6 @@ resource "azurerm_network_interface" "tf_nic" {
 	name = var.nic_name
 	location = var.location
 	resource_group_name = azurerm_resource_group.tf_rg.name
-	network_security_group_id = azurerm_network_security_group.tf_sg.id
 
 	ip_configuration {
 		name = var.nic_ip_conf_name
@@ -137,4 +135,9 @@ resource "azurerm_network_interface" "tf_nic" {
 		public_ip_address_id = azurerm_public_ip.tf_public_ip.id
 		private_ip_address_allocation = "Dynamic"
 	}
+}
+
+resource "azurerm_network_interface_security_group_association" "tf_nic" {
+  network_interface_id      = azurerm_network_interface.tf_nic.id
+  network_security_group_id = azurerm_network_security_group.tf_sg.id
 }

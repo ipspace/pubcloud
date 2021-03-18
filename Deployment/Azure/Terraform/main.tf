@@ -1,6 +1,7 @@
 # main module to deploy network and webVM
 
 provider "azurerm" {
+  features {}
 }
 
 module "network" {

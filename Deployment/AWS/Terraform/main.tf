@@ -10,7 +10,6 @@ module "network" {
 
 module "ec2instance" {
 	source = "./modules/compute"
-	
 	vpc_subnet_id = module.network.subnet_id
 	ec2_security_group_id = module.network.security_group_id
 }

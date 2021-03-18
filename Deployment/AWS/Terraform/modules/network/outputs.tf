@@ -6,7 +6,7 @@ output "subnet_id" {
 }
 
 output "security_group_id" {
-	value = [ "${aws_security_group.My_VPC_SG.id}" ]
+	value = [ aws_security_group.My_VPC_SG.id ]
 	description = "id of security group for ec2 instance"
 }
 

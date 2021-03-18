@@ -7,7 +7,7 @@ output "resourcegroup" {
 
 output "nicID" {
 	description = "id of network interface for VM"
-	value = [ "${azurerm_network_interface.tf_nic.id}" ]
+	value = [ azurerm_network_interface.tf_nic.id ]
 }
 
 output "public_ip" {
